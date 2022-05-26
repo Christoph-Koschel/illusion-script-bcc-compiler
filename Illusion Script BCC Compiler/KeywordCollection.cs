@@ -1,0 +1,42 @@
+﻿namespace IllusionScript.Compiler.BCC
+{
+    public enum KeywordCollection
+    {
+        HeadStart,
+        Label,
+        GotoStatement,
+        ConditionalGotoStatement,
+        Return,
+        Const,
+        Let,
+        Negation,
+        Identity,
+        LogicalNegation,
+        OnesComplement,
+        Addition,
+        Subtraction,
+        Multiplication,
+        Division,
+        Modulo,
+        Pow,
+        LogicalAnd,
+        LogicalOr,
+        NotEquals,
+        Equals,
+        BitwiseAnd,
+        BitwiseOr,
+        BitwiseXor,
+        BitwiseShiftLeft,
+        BitwiseShiftRight,
+        Less,
+        LessEquals,
+        Greater,
+        GreaterEquals,
+        LiteralInt,
+        LiteralBool,
+        LiteralString,
+        Call,
+        SepSplit,
+        CloseCommand
+    }
+}
