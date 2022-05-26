@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <TargetFramework>net5.0</TargetFramework>
+        <RootNamespace>IllusionScript.Compiler.BCC</RootNamespace>
+        <AssemblyName>bcc</AssemblyName>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\Illusion Script\Runtime\Runtime.csproj" />
+    </ItemGroup>
+
+    <!--    <ItemGroup>-->
+    <!--        <None Remove="syscall"/>-->
+    <!--        <EmbeddedResource Include="syscall.php"/>-->
+    <!--    </ItemGroup>-->
+
+    <Target Name="Copy Build" AfterTargets="AfterBuild">
+        <Copy SourceFiles="$(OutDir)/bcc.dll" DestinationFolder="build" />
+        <!-- 
+            For faster Debuge reasons
+            TODO delete
+         -->
+        <Copy SourceFiles="$(OutDir)/bcc.dll" DestinationFolder="C:\Users\Christoph\RiderProjects\Illusion Script\ISC\bin\Debug\net5.0\etc" />
+    </Target>
+
+
+</Project>
