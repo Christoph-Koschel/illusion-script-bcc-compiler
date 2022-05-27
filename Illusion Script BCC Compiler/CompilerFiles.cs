@@ -34,10 +34,8 @@ namespace IllusionScript.Compiler.BCC
                 8bit keyword
                 8bit = name
                 8bit = parameter count
-                16bit = parameter pair
+                8bit = parameter pair
                     - 8bit name
-                    - 8bit type
-                8bit = return type
 
                 # min 32bit header
                 # 32bit + parameter size
@@ -57,15 +55,7 @@ namespace IllusionScript.Compiler.BCC
                 int[] parameterAddress = addressManager.get(parameter.name);
                 byte[] parameterPair = ToByte(parameterAddress, 8);
                 writer.WriteBytes(parameterPair);
-
-                int[] typeKeyword = addressManager.get(parameter.type.name);
-                byte[] typeKeywordBytes = ToByte(typeKeyword, 8);
-                writer.WriteBytes(typeKeywordBytes);
             }
-
-            int[] returnType = addressManager.get(function.returnType.name);
-            byte[] returnTypeBytes = ToByte(returnType, 8);
-            writer.WriteBytes(returnTypeBytes);
         }
 
         private byte[] ToByte(int[] ints, int length)
@@ -144,7 +134,10 @@ namespace IllusionScript.Compiler.BCC
             byte[] keyWordBytes = ToByte(KeywordCollection.Return, 8);
             writer.WriteBytes(keyWordBytes);
 
-            WriteExpression(statement.expression);
+            if (statement.expression != null)
+            {
+                WriteExpression(statement.expression);
+            }
         }
 
         protected override void WriteVariableDeclarationStatement(BoundVariableDeclarationStatement statement)

@@ -151,7 +151,5 @@ namespace IllusionScript.Compiler.BCC
  *  Create a new Project
  *  Implement the new compiler
  *  ILL file implementation
- *  Setting system for project
- *  If name.txt not exists in out dir ask for the output name and write it to the file
  *  Init github workflows
  */
