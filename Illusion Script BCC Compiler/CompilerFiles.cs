@@ -324,6 +324,7 @@ namespace IllusionScript.Compiler.BCC
                         bytes[j] = Convert.ToByte(value[index]);
                     }
 
+
                     writer.WriteBytes(bytes);
                 }
             }

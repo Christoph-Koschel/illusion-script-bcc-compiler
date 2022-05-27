@@ -1,5 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Text;
 using IllusionScript.Runtime;
 using IllusionScript.Runtime.Binding;
 using IllusionScript.Runtime.Compiling;
@@ -13,6 +15,7 @@ namespace IllusionScript.Compiler.BCC
         private string outDir;
         private string objDir;
         private string binDir;
+        private string nameFile;
 
         public override bool BuildOutput()
         {
@@ -35,6 +38,27 @@ namespace IllusionScript.Compiler.BCC
             {
                 Directory.CreateDirectory(binDir);
             }
+
+            nameFile = Path.Combine(outDir, "name.txt");
+            if (!File.Exists(nameFile))
+            {
+                Console.WriteLine("Enter the name of your project");
+                string data = Console.ReadLine();
+                if (string.IsNullOrWhiteSpace(data))
+                {
+                    File.WriteAllText(nameFile, "program.ile");
+                }
+                else
+                {
+                    if (!data.EndsWith(".ile"))
+                    {
+                        data += ".ile";
+                    }
+
+                    File.WriteAllText(nameFile, data);
+                }
+            }
+
 
             return true;
         }
@@ -68,7 +92,8 @@ namespace IllusionScript.Compiler.BCC
                 files.Add(path);
             }
 
-            string outFile = Path.Combine(binDir, "program.ile");
+            string filename = File.ReadAllText(nameFile);
+            string outFile = Path.Combine(binDir, filename);
 
             if (File.Exists(outFile))
             {
@@ -76,6 +101,27 @@ namespace IllusionScript.Compiler.BCC
             }
 
             using StreamWriter streamWriter = new StreamWriter(outFile);
+
+            /*
+                ile header
+                8bit version 
+             */
+
+            byte[] bytes = new byte[8];
+            for (var i = 0; i < bytes.Length; i++)
+            {
+                bytes[i] = 0;
+            }
+
+            var s = Information.getLibVersion();
+            for (var i = 0; i < s.Length; i++)
+            {
+                char c = s[i];
+                bytes[i] = Encoding.ASCII.GetBytes(c.ToString())[0];
+            }
+
+            streamWriter.WriteBytes(bytes);
+
             foreach (string file in files)
             {
                 streamWriter.WriteBytes(File.ReadAllBytes(file));
@@ -104,8 +150,8 @@ namespace IllusionScript.Compiler.BCC
 /*  TODO write interpreter for ile files
  *  Create a new Project
  *  Implement the new compiler
- *  Program header for ile file
- *   - Add version number to header
+ *  ILL file implementation
  *  Setting system for project
  *  If name.txt not exists in out dir ask for the output name and write it to the file
+ *  Init github workflows
  */
