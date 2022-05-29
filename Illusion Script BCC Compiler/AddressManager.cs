@@ -14,7 +14,7 @@ namespace IllusionScript.Compiler.BCC
             register = new Dictionary<string, int[]>();
         }
 
-        public int[] get(string name)
+        public int[] Get(string name)
         {
             if (register.ContainsKey(name))
             {

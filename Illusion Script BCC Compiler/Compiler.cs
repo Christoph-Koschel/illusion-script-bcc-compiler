@@ -76,6 +76,7 @@ namespace IllusionScript.Compiler.BCC
         public override bool Build(Compilation compilation, BoundProgram program)
         {
             List<string> files = new List<string>(compilation.functions.Length);
+            AddressManager addressManager = new AddressManager();
             foreach (FunctionSymbol function in compilation.functions)
             {
                 string path = Path.Combine(objDir, function.name + ".ilo");
@@ -85,8 +86,9 @@ namespace IllusionScript.Compiler.BCC
                     File.Delete(path);
                 }
 
-                writer.WriteLine($"Compile item: {Path.GetFullPath(function.declaration.location.text.filename)}");
-                CompilerFiles file = new CompilerFiles(File.Open(path, FileMode.Create));
+                writer.WriteLine(
+                    $"Compile item: {Path.GetFullPath(function.declaration.location.text.filename)}[{function.name}]");
+                CompilerFiles file = new CompilerFiles(File.Open(path, FileMode.Create), addressManager);
                 file.Write(function, program.functionBodies);
                 file.Close();
                 files.Add(path);
@@ -105,6 +107,7 @@ namespace IllusionScript.Compiler.BCC
             /*
                 ile header
                 8bit version 
+                8bit entry point
              */
 
             byte[] bytes = new byte[8];
@@ -113,7 +116,7 @@ namespace IllusionScript.Compiler.BCC
                 bytes[i] = 0;
             }
 
-            var s = Information.getLibVersion();
+            string s = Information.getLibVersion();
             for (var i = 0; i < s.Length; i++)
             {
                 char c = s[i];
@@ -122,11 +125,24 @@ namespace IllusionScript.Compiler.BCC
 
             streamWriter.WriteBytes(bytes);
 
-            foreach (string file in files)
+            bytes = new byte[8];
+            for (var i = 0; i < bytes.Length; i++)
             {
-                streamWriter.WriteBytes(File.ReadAllBytes(file));
+                bytes[i] = 0;
             }
 
+            streamWriter.WriteBytes(
+                CompilerFiles.ToByte(addressManager.Get((program.mainFunction ?? program.scriptFunction).name), 8));
+
+            foreach (string file in files)
+            {
+                byte[] content = File.ReadAllBytes(file);
+                int end = Array.LastIndexOf(content, (byte)2);
+
+                streamWriter.WriteBytes(content, 0, end);
+            }
+
+            streamWriter.WriteBytes(new byte[] { (int)KeywordCollection.ItemEnd + 1, 0, 0, 0, 0, 0, 0, 0 });
             streamWriter.Close();
 
             writer.WriteLine("Finished compiling");

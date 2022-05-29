@@ -3,40 +3,58 @@
     public enum KeywordCollection
     {
         HeadStart,
+        ItemEnd,
         Label,
-        GotoStatement,
-        ConditionalGotoStatement,
+        Goto,
+        ConditionalGoto,
+        
+        Expression,
+        LiteralInt,
+        LiteralBool,
+        EndString,
+        LiteralString,
+        
+        Call,
+        Assign,
+        Bin,
+        Un,
+        EndCall,
+        
+        SepSplit,
         Return,
         Const,
         Let,
         Negation,
+        
         Identity,
         LogicalNegation,
         OnesComplement,
         Addition,
         Subtraction,
+        
         Multiplication,
         Division,
         Modulo,
         Pow,
         LogicalAnd,
+        
         LogicalOr,
         NotEquals,
         Equals,
         BitwiseAnd,
         BitwiseOr,
+        
         BitwiseXor,
         BitwiseShiftLeft,
         BitwiseShiftRight,
         Less,
         LessEquals,
+        
         Greater,
         GreaterEquals,
-        LiteralInt,
-        LiteralBool,
-        LiteralString,
-        Call,
-        SepSplit,
-        CloseCommand
+        CloseCommand,
+        
+        // Reserved names for static functions
+        Syscall
     }
 }

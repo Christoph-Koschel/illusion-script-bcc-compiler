@@ -14,9 +14,9 @@ namespace IllusionScript.Compiler.BCC
         private AddressManager addressManager;
         private FunctionSymbol function;
 
-        public CompilerFiles(FileStream writer) : base(writer)
+        public CompilerFiles(FileStream writer, AddressManager addressManager) : base(writer)
         {
-            addressManager = new AddressManager();
+            this.addressManager = addressManager;
         }
 
         public void Write(FunctionSymbol function,
@@ -25,6 +25,7 @@ namespace IllusionScript.Compiler.BCC
             this.function = function;
             WriteHeader();
             WriteBlockStatement(bodies[function]);
+            writer.WriteBytes(ToByte(KeywordCollection.ItemEnd, 8));
         }
 
         private void WriteHeader()
@@ -42,7 +43,7 @@ namespace IllusionScript.Compiler.BCC
             */
 
             writer.WriteBytes(ToByte(KeywordCollection.HeadStart, 8));
-            int[] nameAddress = addressManager.get(function.name);
+            int[] nameAddress = addressManager.Get(function.name);
 
             byte[] nameBytes = ToByte(nameAddress, 8);
             writer.WriteBytes(nameBytes);
@@ -52,13 +53,13 @@ namespace IllusionScript.Compiler.BCC
 
             foreach (ParameterSymbol parameter in function.parameters)
             {
-                int[] parameterAddress = addressManager.get(parameter.name);
+                int[] parameterAddress = addressManager.Get(parameter.name);
                 byte[] parameterPair = ToByte(parameterAddress, 8);
                 writer.WriteBytes(parameterPair);
             }
         }
 
-        private byte[] ToByte(int[] ints, int length)
+        public static byte[] ToByte(int[] ints, int length)
         {
             byte[] result = new byte[length];
 
@@ -75,17 +76,17 @@ namespace IllusionScript.Compiler.BCC
             return result;
         }
 
-        private byte[] ToByte(int i, int length)
+        private static byte[] ToByte(int i, int length)
         {
             return ToByte(new[] { i }, length);
         }
 
-        private byte[] ToByte(KeywordCollection item, int length)
+        private static byte[] ToByte(KeywordCollection item, int length)
         {
             return ToByte(new[] { (int)item + 1 }, length);
         }
 
-        private byte[] GenerateEmpyt(int length)
+        private byte[] GenerateEmpty(int length)
         {
             byte[] bytes = new byte[length];
             for (var i = 0; i < bytes.Length; i++)
@@ -106,16 +107,19 @@ namespace IllusionScript.Compiler.BCC
             byte[] keyWordBytes = ToByte(KeywordCollection.Label, 8);
             writer.WriteBytes(keyWordBytes);
 
-            int[] label = addressManager.get(statement.BoundLabel.name);
+            int[] label = addressManager.Get(statement.BoundLabel.name);
             byte[] labelBytes = ToByte(label, 8);
             writer.WriteBytes(labelBytes);
         }
 
         protected override void WriteConditionalGotoStatement(BoundConditionalGotoStatement statement)
         {
-            byte[] keyWordBytes = ToByte(KeywordCollection.ConditionalGotoStatement, 8);
+            byte[] keyWordBytes = ToByte(KeywordCollection.ConditionalGoto, 8);
             writer.WriteBytes(keyWordBytes);
-            int[] address = addressManager.get(statement.boundLabel.name);
+
+            writer.WriteBytes(ToByte(statement.jmpIfTrue ? 1 : 0, 8));
+
+            int[] address = addressManager.Get(statement.boundLabel.name);
             writer.WriteBytes(ToByte(address, 8));
 
             WriteExpression(statement.condition);
@@ -123,9 +127,10 @@ namespace IllusionScript.Compiler.BCC
 
         protected override void WriteGotoStatement(BoundGotoStatement statement)
         {
-            byte[] keyWordBytes = ToByte(KeywordCollection.GotoStatement, 8);
+            byte[] keyWordBytes = ToByte(KeywordCollection.Goto, 8);
             writer.WriteBytes(keyWordBytes);
-            int[] address = addressManager.get(statement.BoundLabel.name);
+
+            int[] address = addressManager.Get(statement.BoundLabel.name);
             writer.WriteBytes(ToByte(address, 8));
         }
 
@@ -153,7 +158,7 @@ namespace IllusionScript.Compiler.BCC
                 writer.WriteBytes(keyWordBytes);
             }
 
-            int[] address = addressManager.get(statement.variable.name);
+            int[] address = addressManager.Get(statement.variable.name);
             writer.WriteBytes(ToByte(address, 8));
 
             WriteExpression(statement.initializer);
@@ -161,6 +166,7 @@ namespace IllusionScript.Compiler.BCC
 
         protected override void WriteExpressionStatement(BoundExpressionStatement statement)
         {
+            writer.WriteBytes(ToByte(KeywordCollection.Expression, 8));
             WriteExpression(statement.expression);
         }
 
@@ -195,6 +201,7 @@ namespace IllusionScript.Compiler.BCC
                     throw new Exception();
             }
 
+            writer.WriteBytes(ToByte(KeywordCollection.Un, 8));
             writer.WriteBytes(ToByte(keywordCollection, 8));
             WriteExpression(expression.right);
         }
@@ -266,6 +273,7 @@ namespace IllusionScript.Compiler.BCC
                     throw new Exception();
             }
 
+            writer.WriteBytes(ToByte(KeywordCollection.Bin, 8));
             WriteExpression(expression.left);
             writer.WriteBytes(ToByte(keywordCollection, 8));
             WriteExpression(expression.right);
@@ -273,7 +281,9 @@ namespace IllusionScript.Compiler.BCC
 
         protected override void WriteAssignmentExpression(BoundAssignmentExpression expression)
         {
-            int[] address = addressManager.get(expression.variableSymbol.name);
+            writer.WriteBytes(ToByte(KeywordCollection.Assign, 8));
+
+            int[] address = addressManager.Get(expression.variableSymbol.name);
             writer.WriteBytes(ToByte(address, 8));
             WriteExpression(expression.expression);
         }
@@ -305,7 +315,7 @@ namespace IllusionScript.Compiler.BCC
 
                 for (int i = 0; i < count8; i++)
                 {
-                    byte[] bytes = GenerateEmpyt(8);
+                    byte[] bytes = GenerateEmpty(8);
                     for (int j = 0; j < 8; j++)
                     {
                         int index = (i * 8) + j;
@@ -317,7 +327,6 @@ namespace IllusionScript.Compiler.BCC
                         bytes[j] = Convert.ToByte(value[index]);
                     }
 
-
                     writer.WriteBytes(bytes);
                 }
             }
@@ -325,7 +334,8 @@ namespace IllusionScript.Compiler.BCC
 
         protected override void WriteVariableExpression(BoundVariableExpression expression)
         {
-            writer.WriteBytes(ToByte(addressManager.get(expression.variableSymbol.name), 8));
+            byte[] bytes = ToByte(addressManager.Get(expression.variableSymbol.name), 8);
+            writer.WriteBytes(bytes);
         }
 
         protected override void WriteCallExpression(BoundCallExpression expression)
@@ -333,10 +343,18 @@ namespace IllusionScript.Compiler.BCC
             /*
                 call <name>
                 <parameters>
-             */
+            */
 
             writer.WriteBytes(ToByte(KeywordCollection.Call, 8));
-            writer.WriteBytes(ToByte(addressManager.get(expression.function.name), 8));
+            if (expression.function.name == "syscall")
+            {
+                writer.WriteBytes(ToByte(KeywordCollection.Syscall, 8));
+            }
+            else
+            {
+                writer.WriteBytes(ToByte(addressManager.Get(expression.function.name), 8));
+            }
+
             bool first = true;
             foreach (BoundExpression argument in expression.arguments)
             {
@@ -351,13 +369,14 @@ namespace IllusionScript.Compiler.BCC
 
                 WriteExpression(argument);
             }
+
+            writer.WriteBytes(ToByte(KeywordCollection.EndCall, 8));
         }
 
         protected override void WriteConversionExpression(BoundConversionExpression expression)
         {
-            writer.WriteBytes(ToByte(KeywordCollection.Call, 8));
-            writer.WriteBytes(ToByte(addressManager.get(expression.type.name), 8));
-
+            // Is not necessary because the type can be detected by the operator and will be casted
+            // Also cannot produce an exception because the conversion was checked by the compiler
             WriteExpression(expression.expression);
         }
     }
